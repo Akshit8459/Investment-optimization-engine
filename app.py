@@ -96,14 +96,24 @@ dataset_map = {
     "Santander Transactions": "santander"
 }
 
-# --- Main Dashboard ---
+# --- Main Dashboard Execution & State Persistence ---
 if run_optimization:
+    st.session_state['has_run'] = True
+    st.session_state['dataset_type'] = dataset_map[dataset_choice]
+    st.session_state['sample_size'] = sample_size
+    st.session_state['budget'] = budget
+    st.session_state['min_response_prob'] = min_response_prob
+
+if st.session_state.get('has_run', False):
+    dataset_type = st.session_state.get('dataset_type', dataset_map[dataset_choice])
+    curr_sample_size = st.session_state.get('sample_size', sample_size)
+    curr_budget = st.session_state.get('budget', budget)
+    curr_min_prob = st.session_state.get('min_response_prob', min_response_prob)
+
     with st.spinner("Executing Feature Engineering, ML Training, & Knapsack Portfolio Optimization..."):
-        dataset_type = dataset_map[dataset_choice]
         data, metrics, optimized, comparison, df_imp, optimizer = run_cached_pipeline(
-            dataset_type, sample_size, budget, min_response_prob
+            dataset_type, curr_sample_size, curr_budget, curr_min_prob
         )
-        
         selected_df = optimized['selected_clients'].copy()
         
         # Apply sidebar filters on view if columns exist

@@ -216,14 +216,19 @@ class LargeScaleModels:
             if self.npv_model is None or not hasattr(self.npv_model, 'named_steps'):
                 return None
             regressor = self.npv_model.named_steps.get('regressor')
+            preprocessor = self.npv_model.named_steps.get('preprocessor')
             if hasattr(regressor, 'feature_importances_'):
                 importances = regressor.feature_importances_
-                feature_names = self.numeric_features + self.categorical_features
-                if len(importances) == len(feature_names):
-                    df_imp = pd.DataFrame({'feature': feature_names, 'importance': importances})
-                    return df_imp.sort_values('importance', ascending=False)
-        except Exception:
-            pass
+                try:
+                    raw_names = preprocessor.get_feature_names_out()
+                except Exception:
+                    raw_names = [f"feature_{i}" for i in range(len(importances))]
+                
+                clean_names = [str(f).replace('num__', '').replace('cat__', '') for f in raw_names]
+                df_imp = pd.DataFrame({'feature': clean_names, 'importance': importances})
+                return df_imp.sort_values('importance', ascending=False)
+        except Exception as e:
+            print("Feature importance extraction error:", e)
         return None
         
     def save_models(self):
