@@ -212,3 +212,45 @@ class LargeScaleOptimizer:
         }
         
         return comparison
+
+    def scenario_analysis(self, budgets=[250000, 500000, 1000000, 2500000, 5000000]):
+        """Run optimization across multiple budget scenarios for sensitivity analysis"""
+        results = {}
+        for b in budgets:
+            res = self.optimize_portfolio(budget=b)
+            results[f'${b/1000000:.2f}M'] = {
+                'budget': b,
+                'total_profit': res['total_profit'],
+                'total_cost': res['total_cost'],
+                'clients_reached': res['clients_reached'],
+                'avg_roi': res['avg_roi']
+            }
+        return pd.DataFrame.from_dict(results, orient='index')
+
+    def monte_carlo_optimization(self, n_simulations=30):
+        """Monte Carlo simulation for robust profit confidence intervals"""
+        profits = []
+        base_npv = self.data['predicted_npv'].values.copy()
+        base_resp = self.data['response_probability'].values.copy()
+        
+        for _ in range(n_simulations):
+            noise_npv = np.random.normal(1.0, 0.05, len(self.data))
+            noise_resp = np.random.normal(0.0, 0.02, len(self.data))
+            
+            self.data['predicted_npv'] = base_npv * noise_npv
+            self.data['response_probability'] = np.clip(base_resp + noise_resp, 0.01, 0.99)
+            
+            opt = self.optimize_portfolio()
+            profits.append(opt['total_profit'])
+            
+        self.data['predicted_npv'] = base_npv
+        self.data['response_probability'] = base_resp
+        
+        s = pd.Series(profits)
+        return {
+            'mean_profit': s.mean(),
+            'std_profit': s.std(),
+            'ci_lower_5': s.quantile(0.05),
+            'ci_upper_95': s.quantile(0.95),
+            'distribution': s
+        }

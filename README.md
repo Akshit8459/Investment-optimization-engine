@@ -1,6 +1,6 @@
 # 🏦 Investment Optimization Engine
 
-An end-to-end predictive machine learning and portfolio optimization engine designed to maximize Net Present Value (NPV) lift under marketing budget constraints.
+An enterprise predictive machine learning and portfolio optimization engine designed to maximize Net Present Value (NPV) lift under marketing budget constraints.
 
 Targeted for large-scale financial ecosystems and transaction datasets, achieving **>40% NPV lift** across multiple portfolio configurations.
 
@@ -22,12 +22,16 @@ Targeted for large-scale financial ecosystems and transaction datasets, achievin
 Investment optimization engine/
 ├── app.py                    # Streamlit interactive web dashboard
 ├── main.py                   # CLI execution pipeline
+├── api.py                    # Production FastAPI REST backend endpoint
 ├── config.py                 # Central configuration & hyperparameters
-├── data_loader.py            # Dataset loading & synthetic data fallback
-├── models.py                 # Scikit-learn predictive ML models (NPV & Response)
+├── data_loader.py            # Dataset handling, imputation & feature engineering
+├── models.py                 # ML models (Random Forest, Linear & Feature Importances)
 ├── optimization_engine.py    # Vectorized Knapsack portfolio optimization engine
 ├── requirements.txt          # Dependencies & pinned package versions
 ├── Dockerfile                # Production Docker container setup
+├── render.yaml               # Render Cloud deployment blueprint
+├── fly.toml                  # Fly.io deployment config
+├── railway.json              # Railway deployment config
 ├── run.bat                   # Windows batch quick-start script
 ├── run.sh                    # Unix/Linux shell quick-start script
 ├── data/                     # Data directory (optional CSV storage)
@@ -38,7 +42,7 @@ Investment optimization engine/
 
 ## 🚀 Quick Start Instructions
 
-### Option 1: Run Interactive Streamlit Dashboard
+### 1. Run Interactive Streamlit Dashboard
 
 * **Windows Command Prompt / PowerShell**:
   ```cmd
@@ -53,20 +57,49 @@ Investment optimization engine/
 
 ---
 
-### Option 2: Run CLI Pipeline Directly
+### 2. Run CLI Pipeline
 
 ```powershell
 python main.py
 ```
 
-Choose from:
-1. HAMZI.AI Financial Ecosystem
-2. SantanderAI Fraud Graph
-3. Santander Transaction Dataset
+---
+
+### 3. Run FastAPI Production REST Server
+
+```powershell
+uvicorn api:app --reload --port 8000
+```
 
 ---
 
-### Option 3: Deploy with Docker
+## ☁️ Cloud Deployment Options
+
+### A. Deploy to Render (Free Cloud)
+1. Push code to your GitHub repository: `https://github.com/Akshit8459/Investment-optimization-engine`
+2. Connect your repo at [Render.com](https://render.com).
+3. Render automatically reads [`render.yaml`](file:///c:/Users/akshi/Desktop/Investment%20optimization%20engine/render.yaml) and deploys your Docker container.
+
+### B. Deploy to Streamlit Community Cloud
+1. Push your repository to GitHub.
+2. Visit [share.streamlit.io/deploy](https://share.streamlit.io/deploy).
+3. Select your repo, branch (`main`), and set Main file path to `app.py`.
+
+### C. Deploy to Railway
+```bash
+railway init
+railway up
+```
+
+### D. Deploy to Fly.io
+```bash
+flyctl launch
+flyctl deploy
+```
+
+---
+
+### E. Deploy with Local Docker
 
 ```bash
 # Build Docker image

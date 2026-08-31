@@ -161,8 +161,58 @@ class LargeDataLoader:
         
         return df
     
+    def engineer_features(self, df):
+        """Create advanced financial features & interactions"""
+        df = df.copy()
+        if 'debt' in df.columns and 'income' in df.columns:
+            df['debt_to_income'] = (df['debt'] / (df['income'] + 1)).clip(0, 10)
+            if 'debt_to_income' not in self.numeric_features:
+                self.numeric_features.append('debt_to_income')
+                
+        if 'income' in df.columns and 'age' in df.columns:
+            df['age_income_interaction'] = df['age'] * df['income']
+            if 'age_income_interaction' not in self.numeric_features:
+                self.numeric_features.append('age_income_interaction')
+                
+        if 'income' in df.columns:
+            df['income_bracket'] = pd.qcut(df['income'], q=5, labels=['Very Low', 'Low', 'Medium', 'High', 'Very High'], duplicates='drop')
+            if 'income_bracket' not in self.categorical_features:
+                self.categorical_features.append('income_bracket')
+                
+        if 'age' in df.columns:
+            df['age_group'] = pd.cut(df['age'], bins=[0, 30, 45, 60, 100], labels=['Young', 'Mid', 'Senior', 'Retired'], right=False)
+            if 'age_group' not in self.categorical_features:
+                self.categorical_features.append('age_group')
+                
+        return df
+
+    def handle_missing_data(self, df):
+        """Advanced missing data handling & imputation"""
+        df = df.copy()
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        for col in numeric_cols:
+            if df[col].isnull().sum() > 0:
+                df[col] = df[col].fillna(df[col].median())
+                
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns
+        for col in categorical_cols:
+            if df[col].isnull().sum() > 0:
+                df[col] = df[col].fillna('Unknown')
+        return df
+
+    def cap_outliers(self, df, method='clip'):
+        """Cap extreme outliers in numeric features"""
+        df = df.copy()
+        for col in self.numeric_features:
+            if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
+                if method == 'clip':
+                    q_low = df[col].quantile(0.005)
+                    q_high = df[col].quantile(0.995)
+                    df[col] = df[col].clip(q_low, q_high)
+        return df
+    
     def load_data(self):
-        """Main loader based on configuration"""
+        """Main loader based on configuration with feature engineering"""
         if self.config.dataset_type == "hamzi":
             self.data = self.load_hamzi_dataset(self.config.hamzi_sample_size)
         elif self.config.dataset_type == "fraud_graph":
@@ -171,6 +221,11 @@ class LargeDataLoader:
             self.data = self.load_santander_transactions()
         else:
             raise ValueError(f"Unknown dataset: {self.config.dataset_type}")
+        
+        # Apply data quality & feature engineering pipeline
+        self.data = self.handle_missing_data(self.data)
+        self.data = self.engineer_features(self.data)
+        self.data = self.cap_outliers(self.data, method='clip')
         
         # Store dataset info
         self.metadata = {

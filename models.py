@@ -210,6 +210,22 @@ class LargeScaleModels:
         """Predict response probability"""
         return self.response_model.predict_proba(X)[:, 1]
     
+    def get_feature_importances(self):
+        """Extract and rank feature importances from trained models"""
+        try:
+            if self.npv_model is None or not hasattr(self.npv_model, 'named_steps'):
+                return None
+            regressor = self.npv_model.named_steps.get('regressor')
+            if hasattr(regressor, 'feature_importances_'):
+                importances = regressor.feature_importances_
+                feature_names = self.numeric_features + self.categorical_features
+                if len(importances) == len(feature_names):
+                    df_imp = pd.DataFrame({'feature': feature_names, 'importance': importances})
+                    return df_imp.sort_values('importance', ascending=False)
+        except Exception:
+            pass
+        return None
+        
     def save_models(self):
         """Save models using joblib (more efficient for large models)"""
         os.makedirs(self.config.models_path, exist_ok=True)

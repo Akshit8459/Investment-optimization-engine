@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: Investment-optimization-engine
+    env: docker
+    repo: https://github.com/Akshit8459/Investment-optimization-engine
+    plan: free
