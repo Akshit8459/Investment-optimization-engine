@@ -4,6 +4,8 @@ An enterprise predictive machine learning and portfolio optimization engine desi
 
 Targeted for large-scale financial ecosystems and transaction datasets, achieving **>40% NPV lift** across multiple portfolio configurations.
 
+🔗 **Live Interactive App**: [https://optimizeinvest.streamlit.app/](https://optimizeinvest.streamlit.app/)
+
 ---
 
 ## 📊 Performance & Verification Results
