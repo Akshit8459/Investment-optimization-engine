@@ -37,19 +37,29 @@ Across all three benchmark financial datasets, the engine consistently far excee
 
 The interactive dashboard at [`https://optimizeinvest.streamlit.app/`](https://optimizeinvest.streamlit.app/) features six analytical modules:
 
-1. **📊 Main Performance Dashboard**:
-   - Executive KPI Summary Cards (Total Profit, NPV Lift %, ROI Multiplier, Clients Reached).
-   - Side-by-side Plotly bar charts comparing Baseline vs. Optimized Profit & ROI ratios.
-2. **🧠 AI-Powered Business Insights Engine**:
-   - Automated performance evaluation, segment concentration warnings, and actionable budget scaling recommendations.
-3. **📈 Risk-Return Frontier & 80/20 Pareto Analysis**:
-   - Portfolio budget sensitivity curves ($250k to $5M) and cumulative profit accumulation line charts.
-4. **🗺️ Segment Performance Heatmaps**:
-   - Multi-dimensional heatmaps mapping profit distribution across risk tolerance tiers and employment statuses.
-5. **🔍 Interactive Client Explorer**:
-   - Real-time client filtering by Minimum Predicted NPV, Response Probability, and Segment with zero-reset state persistence and instant CSV exports.
-6. **📥 Multi-Sheet Executive Exporters**:
-   - One-click downloads for raw client lists (CSV), executive summary reports (CSV), and fully formatted multi-sheet Excel workbooks (`.xlsx`).
+### 1. 📊 Main Performance Dashboard & AI Insights
+Executive KPI summary cards, profit comparison, ROI multiplier, and automated business recommendations.
+![Main Performance Dashboard](assets/demo_dashboard.png)
+
+### 2. 📈 Risk-Return Frontier & 80/20 Pareto Analysis
+Budget scale sensitivity scatter plot and cumulative profit accumulation curve.
+![Risk-Return & Pareto Analysis](assets/demo_risk_pareto.png)
+
+### 3. 🗺️ Segment Performance Heatmaps
+Profit heatmaps mapping segment performance by risk tolerance and employment status.
+![Segment Performance Heatmap](assets/demo_heatmap.png)
+
+### 4. 🔍 Interactive Client Explorer
+Real-time filtering by NPV, conversion probability, and customer segment.
+![Interactive Client Explorer](assets/demo_client_explorer.png)
+
+### 5. 🧠 Feature Importance & Predictive Drivers
+Visualizing machine learning feature importances driving NPV predictions.
+![Feature Importance Analysis](assets/demo_feature_importance.png)
+
+### 6. 📥 Multi-Sheet Executive Exporters
+One-click CSV exports and multi-sheet Excel workbooks (`.xlsx`).
+![Export Reports](assets/demo_export_reports.png)
 
 ---
 
