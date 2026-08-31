@@ -1,6 +1,6 @@
 # 🏦 Investment Optimization Engine
 
-> **Replicating FischerJordan's Core Value Proposition**: An end-to-end predictive Machine Learning and Portfolio Optimization Engine engineered to maximize Net Present Value (NPV) lift under strict marketing budget constraints, achieving **>40% NPV lift** across large-scale financial portfolios.
+> **Enterprise Financial Analytics Benchmark**: An end-to-end predictive Machine Learning and Portfolio Optimization Engine engineered to maximize Net Present Value (NPV) lift under strict marketing budget constraints, achieving **>40% NPV lift** across large-scale financial portfolios.
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://optimizeinvest.streamlit.app/)
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
@@ -11,11 +11,11 @@
 
 ---
 
-## 🎯 Executive Summary & Hook
+## 🎯 Executive Summary
 
 Financial institutions routinely spend millions on customer acquisition and cross-selling campaigns without maximizing return on investment. Standard rule-of-thumb targeting captures sub-optimal returns.
 
-This engine directly replicates **FischerJordan's portfolio optimization methodology** by combining:
+This engine replicates **enterprise portfolio optimization methodology** used by top-tier financial strategy firms by combining:
 1. **Predictive Machine Learning**: Predicting individual customer Net Present Value (NPV) and conversion probability using Random Forest & Linear models.
 2. **Vectorized Knapsack Optimization**: Solving multi-constraint allocation problems in **<0.1 seconds** to select the highest-ROI candidates within fixed budget limits.
 
@@ -23,7 +23,7 @@ This engine directly replicates **FischerJordan's portfolio optimization methodo
 
 ## 📊 Benchmark Results (>40% Target Achieved)
 
-Across all three benchmark financial datasets, the engine consistently far exceeds FischerJordan's **40% NPV Lift target**:
+Across all three benchmark financial datasets, the engine consistently far exceeds the **40% NPV Lift target**:
 
 | Dataset | Baseline Profit | Optimized Profit | NPV Lift % | 40% Target Status | Runtime |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -151,4 +151,4 @@ uvicorn api:app --reload --port 8000
 
 ## 📄 License & Attribution
 
-Developed for **FischerJordan Investment Optimization Engine** demonstration. Open-source under the MIT License.
+Developed for **Enterprise Investment Optimization Engine** demonstration. Open-source under the MIT License.
