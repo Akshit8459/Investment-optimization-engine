@@ -47,43 +47,44 @@ class LargeScaleModels:
     
     def create_target_variables(self):
         """
-        Create NPV and response targets based on available data
+        Create NPV and response targets without target leakage
         """
         df = self.data.copy()
         
-        # Try to find existing NPV-like variable
-        possible_npv_columns = ['npv', 'lifetime_value', 'profit', 'aum', 'balance']
-        npv_col = None
-        for col in possible_npv_columns:
-            if col in df.columns:
-                npv_col = col
-                break
-        
-        if npv_col:
-            df['target_npv'] = df[npv_col]
+        if 'npv' in df.columns:
+            df['target_npv'] = df['npv']
+        elif 'lifetime_value' in df.columns:
+            df['target_npv'] = df['lifetime_value']
         else:
-            # Create synthetic NPV from available financial features
-            income_col = next((col for col in df.columns if 'income' in col.lower()), None)
-            credit_col = next((col for col in df.columns if 'credit' in col.lower()), None)
+            # Multi-factor NPV target from financial features
+            inc = df['income'] if 'income' in df.columns else np.random.lognormal(10.5, 0.8, len(df))
+            aum = df['aum'] if 'aum' in df.columns else np.random.lognormal(10, 1.2, len(df))
+            credit = df['credit_score'] if 'credit_score' in df.columns else np.random.normal(680, 70, len(df))
+            debt = df['debt'] if 'debt' in df.columns else np.random.exponential(15000, len(df))
             
-            if income_col:
-                df['target_npv'] = df[income_col] * 0.5 + np.random.normal(0, 1000, len(df))
-                if credit_col:
-                    df['target_npv'] += (df[credit_col] - 600) * 50
-            else:
-                # Fallback: random NPV
-                df['target_npv'] = np.random.lognormal(8, 2, len(df))
+            df['target_npv'] = (
+                (inc * 0.25) + 
+                (aum * 0.15) + 
+                ((credit - 600) * 35) - 
+                (debt * 0.05) + 
+                np.random.normal(0, 1500, len(df))
+            )
+            df['target_npv'] = np.clip(df['target_npv'], 1000, None)
         
         # Create response target
         if 'response' in df.columns:
             df['target_response'] = df['response']
         else:
-            # Generate response based on features
             prob = 1 / (1 + np.exp(-(
-                df['target_npv'] / df['target_npv'].mean() * 0.3 +
+                (df['target_npv'] / (df['target_npv'].mean() + 1e-5)) * 0.4 +
                 np.random.normal(0, 0.5, len(df))
             )))
             df['target_response'] = np.random.binomial(1, prob)
+        
+        # Remove target variables from feature lists to prevent target leakage
+        targets_to_remove = {'target_npv', 'target_response', 'npv', 'response', 'lifetime_value'}
+        self.numeric_features = [f for f in self.numeric_features if f not in targets_to_remove]
+        self.categorical_features = [f for f in self.categorical_features if f not in targets_to_remove]
         
         return df
     
