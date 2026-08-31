@@ -18,14 +18,29 @@ st.set_page_config(page_title="Investment Optimization Engine", layout="wide", p
 st.title("🏦 Investment Optimization Engine")
 st.markdown("*Enterprise Portfolio Optimization & Machine Learning Engine for 40%+ NPV Lift*")
 
-# --- Streamlit Caching for High Speed Performance ---
-@st.cache_data(ttl=3600)
-def load_cached_data(dataset_type, sample_size):
+# --- Streamlit Caching for Ultra-Low CPU Usage & High Speed ---
+@st.cache_data(ttl=1800, show_spinner=False)
+def run_cached_pipeline(dataset_type, sample_size, budget, min_response_prob):
     config = Config()
     config.dataset_type = dataset_type
     config.hamzi_sample_size = sample_size
+    config.default_budget = budget
+    config.min_response_prob = min_response_prob
+    config.n_estimators = 35  # Lightweight tree count optimized for cloud execution
+    
     loader = LargeDataLoader(config)
-    return loader.load_data()
+    data = loader.load_data()
+    
+    models = LargeScaleModels(data, config)
+    metrics = models.train_models()
+    
+    optimizer = LargeScaleOptimizer(models.data, config)
+    baseline = optimizer.run_baseline(budget=budget)
+    optimized = optimizer.optimize_portfolio(budget=budget)
+    comparison = optimizer.compare_results()
+    df_imp = models.get_feature_importances()
+    
+    return data, metrics, optimized, comparison, df_imp
 
 # --- Sidebar Controls ---
 with st.sidebar:
@@ -40,10 +55,10 @@ with st.sidebar:
     sample_size = st.slider(
         "Sample Size",
         min_value=1000,
-        max_value=100000,
-        value=50000,
+        max_value=50000,
+        value=20000,
         step=1000,
-        help="Number of client records to analyze."
+        help="Number of client records to analyze (lower sample size runs faster)."
     )
     
     budget = st.number_input(
@@ -82,30 +97,16 @@ dataset_map = {
 # --- Main Dashboard ---
 if run_optimization:
     with st.spinner("Executing Feature Engineering, ML Training, & Knapsack Portfolio Optimization..."):
-        config = Config()
-        config.dataset_type = dataset_map[dataset_choice]
-        config.hamzi_sample_size = sample_size
-        config.default_budget = budget
-        config.min_response_prob = min_response_prob
+        dataset_type = dataset_map[dataset_choice]
+        data, metrics, optimized, comparison, df_imp = run_cached_pipeline(
+            dataset_type, sample_size, budget, min_response_prob
+        )
         
-        # Load & Preprocess Data
-        data = load_cached_data(config.dataset_type, sample_size)
-        
-        # Apply sidebar filters if columns exist
+        # Apply sidebar filters on view if columns exist
         if min_income > 0 and 'income' in data.columns:
             data = data[data['income'] >= min_income]
         if 'risk_tolerance' in data.columns and risk_filter:
             data = data[data['risk_tolerance'].isin(risk_filter)]
-        
-        # Train ML Models
-        models = LargeScaleModels(data, config)
-        metrics = models.train_models()
-        
-        # Run Optimization & Baseline
-        optimizer = LargeScaleOptimizer(models.data, config)
-        baseline = optimizer.run_baseline(budget=budget)
-        optimized = optimizer.optimize_portfolio(budget=budget)
-        comparison = optimizer.compare_results()
 
     # --- Top KPI Summary Cards ---
     col1, col2, col3, col4 = st.columns(4)
@@ -137,9 +138,8 @@ if run_optimization:
     st.markdown("---")
 
     # --- Tabbed Deep-Dive Analytics ---
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "📊 Main Performance", 
-        "📈 Scenario & Sensitivity Analysis", 
         "🧠 Feature Importance", 
         "📥 Export Results"
     ])
@@ -190,34 +190,7 @@ if run_optimization:
                     st.warning("⚠️ **40% Target Not Yet Achieved**")
 
     with tab2:
-        st.subheader("Budget Sensitivity Scenario Analysis")
-        st.markdown("Analyze expected profit growth across different marketing budget allocations.")
-        with st.spinner("Generating scenario analysis curve..."):
-            scenario_df = optimizer.scenario_analysis(budgets=[250000, 500000, 1000000, 2500000, 5000000])
-            
-            fig = px.line(
-                scenario_df,
-                x='budget',
-                y='total_profit',
-                text=[f"${v/1e6:.2f}M" for v in scenario_df['total_profit']],
-                markers=True,
-                title="Profit Growth vs Budget Scale ($)"
-            )
-            fig.update_traces(textposition="top left", line_color="#228BE6", line_width=3)
-            fig.update_layout(xaxis_title="Budget ($)", yaxis_title="Optimized Profit ($)", height=400)
-            st.plotly_chart(fig, width="stretch")
-            
-            st.dataframe(scenario_df.style.format({
-                'budget': "${:,.0f}",
-                'total_profit': "${:,.2f}",
-                'total_cost': "${:,.2f}",
-                'clients_reached': "{:,.0f}",
-                'avg_roi': "{:.2f}x"
-            }))
-
-    with tab3:
         st.subheader("Feature Importance & Predictive Drivers")
-        df_imp = models.get_feature_importances()
         if df_imp is not None:
             fig = px.bar(
                 df_imp.head(10),
@@ -233,7 +206,7 @@ if run_optimization:
         else:
             st.info("Feature importance analysis is available for Random Forest models.")
 
-    with tab4:
+    with tab3:
         st.subheader("Export Optimization Artifacts")
         st.markdown("Download targeted client lists and executive summary reports for campaign execution.")
         
@@ -281,6 +254,6 @@ else:
     
     - 🎯 **Predictive ML Ensembles**: Predicts individual client NPV and conversion probability using Random Forest & Linear models.
     - ⚡ **Vectorized Knapsack Optimizer**: Achieves **>40% NPV Lift** in **<0.1 seconds**.
-    - 📈 **Scenario Analysis**: Performs sensitivity curve evaluation across budget tiers.
+    - 🧠 **Feature Importance Analysis**: Visualizes top drivers behind NPV predictions.
     - 🔌 **Production REST API**: Integrates seamlessly with FastAPI (`api.py`).
     """)
