@@ -12,13 +12,15 @@ from config import Config
 from data_loader import LargeDataLoader
 from models import LargeScaleModels
 from optimization_engine import LargeScaleOptimizer
+from insights_engine import InsightsGenerator
+from report_generator import OptimizationReportGenerator
 
 st.set_page_config(page_title="Investment Optimization Engine", layout="wide", page_icon="🏦")
 
 st.title("🏦 Investment Optimization Engine")
 st.markdown("*Enterprise Portfolio Optimization & Machine Learning Engine for 40%+ NPV Lift*")
 
-# --- Streamlit Caching for Ultra-Low CPU Usage & High Speed ---
+# --- Streamlit Caching for High Speed Performance ---
 @st.cache_data(ttl=1800, show_spinner=False)
 def run_cached_pipeline(dataset_type, sample_size, budget, min_response_prob):
     config = Config()
@@ -26,7 +28,7 @@ def run_cached_pipeline(dataset_type, sample_size, budget, min_response_prob):
     config.hamzi_sample_size = sample_size
     config.default_budget = budget
     config.min_response_prob = min_response_prob
-    config.n_estimators = 35  # Lightweight tree count optimized for cloud execution
+    config.n_estimators = 35  # Lightweight tree count for web execution
     
     loader = LargeDataLoader(config)
     data = loader.load_data()
@@ -40,7 +42,7 @@ def run_cached_pipeline(dataset_type, sample_size, budget, min_response_prob):
     comparison = optimizer.compare_results()
     df_imp = models.get_feature_importances()
     
-    return data, metrics, optimized, comparison, df_imp
+    return data, metrics, optimized, comparison, df_imp, optimizer
 
 # --- Sidebar Controls ---
 with st.sidebar:
@@ -58,7 +60,7 @@ with st.sidebar:
         max_value=50000,
         value=20000,
         step=1000,
-        help="Number of client records to analyze (lower sample size runs faster)."
+        help="Number of client records to analyze."
     )
     
     budget = st.number_input(
@@ -98,15 +100,17 @@ dataset_map = {
 if run_optimization:
     with st.spinner("Executing Feature Engineering, ML Training, & Knapsack Portfolio Optimization..."):
         dataset_type = dataset_map[dataset_choice]
-        data, metrics, optimized, comparison, df_imp = run_cached_pipeline(
+        data, metrics, optimized, comparison, df_imp, optimizer = run_cached_pipeline(
             dataset_type, sample_size, budget, min_response_prob
         )
         
+        selected_df = optimized['selected_clients'].copy()
+        
         # Apply sidebar filters on view if columns exist
-        if min_income > 0 and 'income' in data.columns:
-            data = data[data['income'] >= min_income]
-        if 'risk_tolerance' in data.columns and risk_filter:
-            data = data[data['risk_tolerance'].isin(risk_filter)]
+        if min_income > 0 and 'income' in selected_df.columns:
+            selected_df = selected_df[selected_df['income'] >= min_income]
+        if 'risk_tolerance' in selected_df.columns and risk_filter:
+            selected_df = selected_df[selected_df['risk_tolerance'].isin(risk_filter)]
 
     # --- Top KPI Summary Cards ---
     col1, col2, col3, col4 = st.columns(4)
@@ -138,10 +142,13 @@ if run_optimization:
     st.markdown("---")
 
     # --- Tabbed Deep-Dive Analytics ---
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📊 Main Performance", 
+        "📈 Risk-Return & Pareto", 
+        "🗺️ Segment Heatmap",
+        "🔍 Client Explorer",
         "🧠 Feature Importance", 
-        "📥 Export Results"
+        "📥 Export Reports"
     ])
 
     with tab1:
@@ -170,30 +177,123 @@ if run_optimization:
             fig.update_layout(title="Return on Investment (ROI Multiplier)", yaxis_title="ROI Ratio", height=380)
             st.plotly_chart(fig, width="stretch")
 
-        with st.expander("📋 Detailed Metrics & Model Diagnostics", expanded=True):
-            m1, m2, m3 = st.columns(3)
-            with m1:
-                st.markdown("**Machine Learning Accuracy**")
-                st.write(f"• NPV Regressor R²: **{metrics['npv_r2']:.4f}**")
-                st.write(f"• Response Classifier AUC: **{metrics['response_auc']:.4f}**")
-                st.write(f"• Records Analyzed: **{len(data):,}**")
-            with m2:
-                st.markdown("**Optimization Execution**")
-                st.write(f"• Algorithm: **{optimized['status']}**")
-                st.write(f"• Marketing Budget Spent: **${comparison['optimized_cost']:,.2f}**")
-                st.write(f"• Total Profit Generated: **${comparison['objective_value']:,.2f}**")
-            with m3:
-                st.markdown("**Target Status**")
-                if comparison['meets_target']:
-                    st.success("✅ **40%+ NPV Lift Target Achieved!**")
-                else:
-                    st.warning("⚠️ **40% Target Not Yet Achieved**")
+        # --- AI-Powered Automated Insights & Recommendations ---
+        with st.expander("🧠 AI-Powered Business Insights & Strategic Recommendations", expanded=True):
+            generator = InsightsGenerator(optimized, comparison)
+            insights = generator.generate_all_insights()
+            
+            ic1, ic2 = st.columns(2)
+            for i, insight in enumerate(insights):
+                col_target = ic1 if i % 2 == 0 else ic2
+                icon = {'success': '✅', 'warning': '⚠️', 'info': 'ℹ️', 'recommendation': '💡'}.get(insight['type'], '📌')
+                with col_target:
+                    st.markdown(f"**{icon} {insight['title']}**")
+                    st.write(insight['description'])
+                    st.caption(f"**Action:** {insight['action']}")
+                    st.markdown("---")
 
     with tab2:
+        st.subheader("Portfolio Efficient Frontier & Pareto Curve")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**1. Budget Sensitivity Frontier**")
+            scenarios = optimizer.scenario_analysis(budgets=[250000, 500000, 1000000, 2500000, 5000000])
+            fig1 = px.scatter(
+                scenarios,
+                x='total_cost',
+                y='total_profit',
+                size='clients_reached',
+                color='avg_roi',
+                title="Profit vs Marketing Spend Scale",
+                labels={'total_cost': 'Budget Spent ($)', 'total_profit': 'Expected Return ($)'},
+                color_continuous_scale='Viridis'
+            )
+            st.plotly_chart(fig1, width="stretch")
+            
+        with col2:
+            st.markdown("**2. Cumulative Profit Pareto Curve (80/20 Analysis)**")
+            if not selected_df.empty and 'expected_profit' in selected_df.columns:
+                sorted_pareto = selected_df.sort_values('expected_profit', ascending=False).copy()
+                sorted_pareto['cum_profit'] = sorted_pareto['expected_profit'].cumsum()
+                sorted_pareto['client_rank'] = range(1, len(sorted_pareto) + 1)
+                
+                fig2 = px.line(
+                    sorted_pareto,
+                    x='client_rank',
+                    y='cum_profit',
+                    title="Cumulative Profit Accumulation"
+                )
+                tot_p = sorted_pareto['cum_profit'].max()
+                fig2.add_hline(y=tot_p * 0.8, line_dash="dash", line_color="red", annotation_text="80% Profit Threshold")
+                st.plotly_chart(fig2, width="stretch")
+
+    with tab3:
+        st.subheader("Segment Performance Heatmap")
+        cat_cols = selected_df.select_dtypes(include=['object', 'category']).columns
+        if len(cat_cols) >= 2:
+            row_cat = cat_cols[0]
+            col_cat = cat_cols[1]
+            pivot = selected_df.pivot_table(
+                index=row_cat, 
+                columns=col_cat, 
+                values='expected_profit', 
+                aggfunc='sum', 
+                fill_value=0
+            )
+            fig = px.imshow(
+                pivot,
+                title=f"Total Profit Heatmap: {row_cat.replace('_',' ').title()} vs {col_cat.replace('_',' ').title()}",
+                labels=dict(x=col_cat.title(), y=row_cat.title(), color="Total Profit ($)"),
+                color_continuous_scale="Viridis"
+            )
+            st.plotly_chart(fig, width="stretch")
+        elif len(cat_cols) == 1:
+            fig = px.pie(selected_df, names=cat_cols[0], values='expected_profit', title=f"Profit Distribution by {cat_cols[0].title()}")
+            st.plotly_chart(fig, width="stretch")
+        else:
+            st.info("Segment heatmap requires categorical attributes.")
+
+    with tab4:
+        st.subheader("🔍 Interactive Client-Level Explorer")
+        st.markdown("Filter and inspect targeted individual clients in real time.")
+        
+        fc1, fc2, fc3 = st.columns(3)
+        with fc1:
+            max_p_val = int(selected_df['predicted_npv'].max()) if 'predicted_npv' in selected_df.columns and len(selected_df) > 0 else 100000
+            min_npv_val = st.slider("Min Predicted NPV ($)", 0, max_p_val, 0)
+        with fc2:
+            min_prob_val = st.slider("Min Response Probability", 0.0, 1.0, 0.3)
+        with fc3:
+            cat_filter_cols = selected_df.select_dtypes(include=['object', 'category']).columns
+            selected_seg = None
+            if len(cat_filter_cols) > 0:
+                seg_col = cat_filter_cols[0]
+                selected_seg = st.multiselect(f"Filter by {seg_col.title()}", selected_df[seg_col].unique(), default=selected_df[seg_col].unique())
+
+        explorer_df = selected_df.copy()
+        if 'predicted_npv' in explorer_df.columns:
+            explorer_df = explorer_df[explorer_df['predicted_npv'] >= min_npv_val]
+        if 'response_probability' in explorer_df.columns:
+            explorer_df = explorer_df[explorer_df['response_probability'] >= min_prob_val]
+        if selected_seg is not None and len(cat_filter_cols) > 0:
+            explorer_df = explorer_df[explorer_df[cat_filter_cols[0]].isin(selected_seg)]
+
+        st.dataframe(explorer_df.head(200), use_container_width=True)
+        
+        csv_filtered = explorer_df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label=f"📥 Download Filtered Client Subset ({len(explorer_df):,} clients)",
+            data=csv_filtered,
+            file_name="filtered_target_clients.csv",
+            mime="text/csv"
+        )
+
+    with tab5:
         st.subheader("Feature Importance & Predictive Drivers")
         if df_imp is not None:
             fig = px.bar(
-                df_imp.head(10),
+                df_imp.head(12),
                 x='importance',
                 y='feature',
                 orientation='h',
@@ -206,13 +306,11 @@ if run_optimization:
         else:
             st.info("Feature importance analysis is available for Random Forest models.")
 
-    with tab3:
+    with tab6:
         st.subheader("Export Optimization Artifacts")
-        st.markdown("Download targeted client lists and executive summary reports for campaign execution.")
+        st.markdown("Download targeted client lists, summary metrics, and executive multi-sheet Excel workbooks.")
         
-        selected_df = optimized['selected_clients']
         csv_selected = selected_df.to_csv(index=False).encode('utf-8')
-        
         summary_df = pd.DataFrame([{
             'Metric': 'Baseline Profit', 'Value': f"${comparison['baseline_profit']:,.2f}"
         }, {
@@ -226,7 +324,11 @@ if run_optimization:
         }])
         csv_summary = summary_df.to_csv(index=False).encode('utf-8')
         
-        col1, col2 = st.columns(2)
+        # Generate Excel workbook
+        report_gen = OptimizationReportGenerator(optimized, comparison)
+        excel_bytes = report_gen.export_excel_bytes()
+
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.download_button(
                 label="📄 Download Selected Clients (CSV)",
@@ -243,6 +345,14 @@ if run_optimization:
                 mime="text/csv",
                 width="stretch"
             )
+        with col3:
+            st.download_button(
+                label="📗 Download Executive Excel Workbook (.xlsx)",
+                data=excel_bytes,
+                file_name="optimization_results_workbook.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                width="stretch"
+            )
 
 else:
     st.info("👈 Select your dataset and parameters in the sidebar, then click 'Run Optimization' to execute!")
@@ -254,6 +364,8 @@ else:
     
     - 🎯 **Predictive ML Ensembles**: Predicts individual client NPV and conversion probability using Random Forest & Linear models.
     - ⚡ **Vectorized Knapsack Optimizer**: Achieves **>40% NPV Lift** in **<0.1 seconds**.
-    - 🧠 **Feature Importance Analysis**: Visualizes top drivers behind NPV predictions.
+    - 🧠 **AI-Powered Insights**: Generates automated strategic business recommendations.
+    - 📈 **Risk-Return Efficient Frontier**: Visualizes portfolio budget scale sensitivity & Pareto profit curves.
+    - 📥 **Multi-Sheet Excel Reports**: Exports complete executive workbooks (`.xlsx`).
     - 🔌 **Production REST API**: Integrates seamlessly with FastAPI (`api.py`).
     """)
