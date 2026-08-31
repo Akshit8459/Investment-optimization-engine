@@ -6,6 +6,13 @@ from models import LargeScaleModels
 from optimization_engine import LargeScaleOptimizer
 import time
 
+import sys
+if sys.stdout.encoding.lower() != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 def run_pipeline(dataset_type='hamzi', sample_size=50000):
     """
     Main pipeline for large-scale investment optimization
@@ -24,7 +31,7 @@ def run_pipeline(dataset_type='hamzi', sample_size=50000):
     print("STEP 1: Loading data...")
     loader = LargeDataLoader(config)
     data = loader.load_data()
-    print(f"✓ Loaded {len(data):,} records")
+    print(f"[OK] Loaded {len(data):,} records")
     
     # 2. Train models
     print("\nSTEP 2: Training predictive models...")
@@ -33,7 +40,7 @@ def run_pipeline(dataset_type='hamzi', sample_size=50000):
     models = LargeScaleModels(data, config)
     metrics = models.train_models()
     
-    print(f"✓ Models trained in {time.time() - start_time:.1f} seconds")
+    print(f"[OK] Models trained in {time.time() - start_time:.1f} seconds")
     print(f"  NPV R²: {metrics['npv_r2']:.4f}")
     print(f"  Response AUC: {metrics['response_auc']:.4f}")
     
@@ -45,7 +52,7 @@ def run_pipeline(dataset_type='hamzi', sample_size=50000):
     baseline = optimizer.run_baseline()
     optimized = optimizer.optimize_portfolio()
     
-    print(f"✓ Optimization completed in {time.time() - start_time:.1f} seconds")
+    print(f"[OK] Optimization completed in {time.time() - start_time:.1f} seconds")
     
     # 4. Compare results
     print("\nSTEP 4: Analyzing results...")
@@ -57,7 +64,7 @@ def run_pipeline(dataset_type='hamzi', sample_size=50000):
     print(f"Baseline Profit:     ${comparison['baseline_profit']:,.2f}")
     print(f"Optimized Profit:    ${comparison['optimized_profit']:,.2f}")
     print(f"NPV Lift:            {comparison['npv_lift_percent']:.1f}%")
-    print(f"Target (40% Lift):   {'✅ ACHIEVED' if comparison['meets_target'] else '❌ NOT ACHIEVED'}")
+    print(f"Target (40% Lift):   {'ACHIEVED' if comparison['meets_target'] else 'NOT ACHIEVED'}")
     print(f"\nROI Comparison:")
     print(f"  Baseline: {comparison['baseline_roi']:.2f}x")
     print(f"  Optimized: {comparison['optimized_roi']:.2f}x")

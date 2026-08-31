@@ -50,7 +50,7 @@ with st.sidebar:
         step=0.05
     )
     
-    run_optimization = st.button("🚀 Run Optimization", use_container_width=True)
+    run_optimization = st.button("🚀 Run Optimization", width="stretch")
 
 # Main content
 if run_optimization:
@@ -132,7 +132,7 @@ if run_optimization:
             yaxis_title="Total Profit ($)",
             height=400
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     
     with col2:
         fig = go.Figure()
@@ -148,7 +148,7 @@ if run_optimization:
             yaxis_title="Return on Investment",
             height=400
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     
     # Detailed metrics
     with st.expander("📊 Detailed Metrics", expanded=True):
@@ -189,7 +189,7 @@ if run_optimization:
             title=f"Selected Clients by {col}",
             hole=0.3
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 else:
     st.info("👈 Configure settings and click 'Run Optimization' to start")
     
